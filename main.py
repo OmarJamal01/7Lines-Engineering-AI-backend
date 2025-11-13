@@ -76,6 +76,6 @@ async def chat(request: Request):
     return {"reply": answer}
 
 # ---------- HEALTH CHECK ----------
-@app.get("/")
-def root():
-    return {"status": "running", "message": "7Lines Engineering AI backend ready"}
+@app.get("/test")
+def test():
+    return {"status": "ok", "message": "Server running and OpenAI ready."}
