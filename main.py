@@ -76,6 +76,40 @@ async def chat(request: Request):
     return {"reply": answer}
 
 # ---------- HEALTH CHECK ----------
+@app.post("/analyze")
+async def analyze(request: Request):
+    """Analyze uploaded PDF (base64) for DBC 2021 compliance."""
+    data = await request.json()
+    file_data = data.get("file_data")
+
+    if not file_data:
+        return {"status": "error", "message": "No file data received."}
+
+    import base64, io, pdfplumber
+    pdf_bytes = base64.b64decode(file_data)
+    pdf_text = ""
+
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        for page in pdf.pages[:5]:
+            pdf_text += page.extract_text() or ""
+
+    # Dummy AI scoring logic for demo
+    total_checks = 10
+    failed_checks = []
+    if "door" not in pdf_text.lower():
+        failed_checks.append({"code": "E6", "description": "Door width info missing (≥900mm required)"})
+    if "ramp" not in pdf_text.lower():
+        failed_checks.append({"code": "LCR2", "description": "Ramp slope info missing (≤8% required)"})
+
+    passed = total_checks - len(failed_checks)
+    pass_rate = int((passed / total_checks) * 100)
+
+    return {
+        "status": "ok",
+        "pass_rate": pass_rate,
+        "failed": failed_checks
+    }
 @app.get("/test")
 def test():
     return {"status": "ok", "message": "Server running and OpenAI ready."}
+
